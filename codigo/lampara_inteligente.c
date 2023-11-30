@@ -15,21 +15,26 @@ int main () {
 
 
 	adc_init();
-	adc_gpio_init (26);
-	adc_select_input (0);
+	adc_gpio_init (27);
+	adc_gpio_init (28);
+	adc_select_input (1);
 
 	gpio_init (21);
 	gpio_set_dir (21, true);
 
-	i2c_init (i2c1, 100*1000);
-
+	printf("Antes i2c_init/n");
+	
 	gpio_set_function(18, GPIO_FUNC_I2C);
 	gpio_set_function(19, GPIO_FUNC_I2C);
 	gpio_pull_up(18);
 	gpio_pull_up(19);
 
+	printf("Antes del lcd_init/n);
+	
 	lcd_init();
 
+	printf("Antes del lcd_init/n);
+	
 	// Elijo el GPIO20 como salida de PWM
 	gpio_set_function(20, GPIO_FUNC_PWM);
 	// Devuelve una configuracion estandar de PWM
@@ -41,37 +46,26 @@ int main () {
 	// 50% de ancho de pulso
 	pwm_set_gpio_level(20, 0x8000);
 
+	printf("Despues del pwm_init/n);
+	
 	while (true) {
 
-		(adc_get_selected_input() == 0)? adc_select_input(2) : adc_select_input(0);
+		(adc_get_selected_input() == 1)? adc_select_input(2) : adc_select_input(1);
 
 		uint16_t adc_reading = adc_read();
 		
 		lcd_clear();
 
-		// Todo lo del LDR lo hago cuando leo el canal 0
-		if(adc_get_selected_input() == 0) {
+		// Todo lo del LDR lo hago cuando leo el canal 1
+		if(adc_get_selected_input() == 1) {
 		
 			uint16_t ldr_value = adc_read();
 			uint32_t Reglade3=40000*(ldr_value)/4095;
 			uint16_t Referencia= 300;
 			
-			pwm_set_gpio_level(16, 0xffff * (uint32_t)ldr_value / 0x3ff);
+			pwm_set_gpio_level(20, 0xffff * (uint32_t)ldr_value / 4095.0);
 
 			printf("ADC LDR %d\n", ldr_value);
-
-			uint32_t error= ((ldr_value- Referencia)*40000)/470;
-
-
-			if (ldr_value < 500) {	
-				gpio_put (21,0);
-			} 
-			else if(ldr_value < 1000) {
-
-			}
-			else {
-				gpio_put (21,1);
-			}
 		}
 		else if(adc_get_selected_input() == 2) {
 			// Convierto valor de ADC a temperatura si estoy leyendo el canal 2
